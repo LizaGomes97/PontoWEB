@@ -1,0 +1,30 @@
+# Arquivos de log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependências
+# A pasta node_modules contém todos os pacotes que são instalados via npm.
+# Ela é muito grande e pode ser recriada a qualquer momento com o comando 'npm install'.
+node_modules/
+
+# Arquivos de build e produção
+# A pasta 'build' (ou 'dist') é gerada automaticamente quando você compila o projeto.
+build/
+dist/
+.vite/
+.output/
+
+# Arquivos de ambiente
+# Nunca adicione arquivos de ambiente ao Git. Eles podem conter senhas e chaves de API.
+.env
+.env.local
+.env.*.local
+
+# Arquivos de cache e de sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de configuração de editores de código
+.vscode/
+.idea/
