@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useAuth, UserType } from '../contexts/AuthContext';
 import { Clock, Users, UserCheck, Mail, Lock, User } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function LoginForm() {
   const { login, register } = useAuth();
@@ -63,11 +63,11 @@ export function LoginForm() {
       const success = await register(registerName, registerEmail, registerPassword, registerUserType);
       if (success) {
         toast.success('Cadastro realizado com sucesso!');
-      } else {
-        toast.error('Erro ao criar conta');
       }
-    } catch (error) {
-      toast.error('Erro ao criar conta');
+      // O 'else' não é mais necessário, pois um erro será lançado
+    } catch (error: any) {
+      // Capturamos o erro lançado pelo AuthContext e mostramos sua mensagem
+      toast.error(error.message || 'Erro ao criar conta');
     } finally {
       setIsLoading(false);
     }

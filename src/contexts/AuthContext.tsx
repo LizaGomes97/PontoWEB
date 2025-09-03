@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
+        toast.error('Credenciais inválidas. Verifique seu e-mail e senha.');
         console.error('Falha no login');
         return false;
       }
@@ -101,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Verifica se o tipo de usuário que tentou logar corresponde ao do banco
       if (loggedUser.type !== type) {
+        toast.error('Você está tentando acessar o painel errado (Funcionário/Gestor).');
         console.error('Tipo de usuário incorreto');
         // toast.error('Você está tentando logar no painel errado (Funcionário/Gestor)');
         return false;
@@ -115,39 +117,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (name: string, email: string, password: string, type: UserType): Promise<boolean> => {
-      try {
-          const response = await fetch('http://localhost:3001/api/register', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ name, email, password, type }),
-          });
+    const response = await fetch('http://localhost:3001/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password, type }),
+    });
 
-          if (!response.ok) {
-              // Se o servidor retornar um erro (ex: e-mail já existe), o 'response.ok' será falso
-              const errorData = await response.json();
-              console.error('Erro no registro:', errorData.message);
-              // Você pode usar o toast aqui para mostrar o erro para o usuário
-              // toast.error(errorData.message);
-              return false;
-          }
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Apenas lança o erro para quem chamou a função (o LoginForm)
+      throw new Error(errorData.message || 'Erro desconhecido no registro.');
+    }
 
-          const newUser: User = await response.json();
+    const newUser: User = await response.json();
 
-          // Se o registro foi bem-sucedido, fazemos o login do novo usuário
-          setUser(newUser);
+    setUser(newUser);
 
-          if (newUser.type === 'employee') {
-              // Adiciona o novo funcionário à lista local para a UI reagir
-              setEmployees(prev => [...prev, newUser]);
-          }
+    if (newUser.type === 'employee') {
+      setEmployees(prev => [...prev, newUser]);
+    }
 
-          return true;
-      } catch (error) {
-          console.error('Falha ao conectar com o servidor:', error);
-          return false;
-      }
+    return true;
   };
 
   const logout = () => {

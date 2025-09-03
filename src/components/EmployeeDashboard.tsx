@@ -15,7 +15,7 @@ import {
   LogOut,
   Settings as SettingsIcon
 } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface EmployeeDashboardProps {
   onNavigate: (page: 'settings' | 'timesheet') => void;
