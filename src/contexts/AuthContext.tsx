@@ -56,15 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         if (user.type === 'employee') {
           // Lógica do funcionário (já existente)
-          const entriesResponse = await fetch(`http://localhost:3001/api/time-entries/${user.id}`);
+          const entriesResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries/${user.id}`);
           if (entriesResponse.ok) {
             setTimeEntries(await entriesResponse.json());
           }
         } else if (user.type === 'employer') {
           // --- NOVA LÓGICA DO GESTOR ---
           const [employeesResponse, entriesResponse] = await Promise.all([
-            fetch('http://localhost:3001/api/employees'),
-            fetch('http://localhost:3001/api/time-entries')
+            fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees`),
+            fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries`)
           ]);
 
           if (employeesResponse.ok) {
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string, type: UserType): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (name: string, email: string, password: string, type: UserType): Promise<boolean> => {
-    const response = await fetch('http://localhost:3001/api/register', {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -188,7 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     try {
-      const response = await fetch('http://localhost:3001/api/time-entries/check-in', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries/check-in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -217,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     try {
-        const response = await fetch('http://localhost:3001/api/time-entries/check-out', {
+        const response = await fetch('${import.meta.env.VITE_API_BASE_URL}/api/time-entries/check-out', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -238,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const addEmployee = async (employeeData: Omit<User, 'id' | 'type' | 'companyId'>): Promise<boolean> => {
     try {
-        const response = await fetch('http://localhost:3001/api/employees', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(employeeData),
