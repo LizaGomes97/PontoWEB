@@ -34,7 +34,7 @@ interface AuthContextType {
   logout: () => void;
   checkIn: (location: { latitude: number; longitude: number; address: string }) => void;
   checkOut: (location: { latitude: number; longitude: number; address: string }) => void;
-  addEmployee: (employee: Omit<User, 'id'>) => void;
+  addEmployee: (employee: Omit<User, 'id' | 'type' | 'companyId'>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,15 +47,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchInitialData = async (currentUser: User) => {
     try {
       if (currentUser.type === 'employer') {
+        // Busca os dados para o gestor
         const [employeesResponse, entriesResponse] = await Promise.all([
           fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees`),
           fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries`)
         ]);
-        if (employeesResponse.ok) setEmployees(await employeesResponse.json());
-        if (entriesResponse.ok) setTimeEntries(await entriesResponse.json());
+        if (employeesResponse.ok) {
+          setEmployees(await employeesResponse.json());
+        }
+        if (entriesResponse.ok) {
+          setTimeEntries(await entriesResponse.json());
+        }
       } else {
+        // Busca os dados para o funcionário
         const entriesResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries/${currentUser.id}`);
-        if (entriesResponse.ok) setTimeEntries(await entriesResponse.json());
+        if (entriesResponse.ok) {
+          setTimeEntries(await entriesResponse.json());
+        }
       }
     } catch (error) {
       console.error("Erro ao buscar dados iniciais:", error);
