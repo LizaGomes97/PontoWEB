@@ -4,6 +4,7 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
+import { registerSchema, loginSchema, addEmployeeSchema } from './validationSchemas';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -18,15 +19,16 @@ app.get('/api', (req, res) => {
   res.json({ message: 'Olá, o backend do PontoFácil está funcionando!' });
 });
 
-// NOSSA NOVA ROTA DE CADASTRO!
 app.post('/api/register', async (req, res) => {
-  const { name, email, password, type } = req.body;
+  const result = registerSchema.safeParse(req.body);
 
-  // Validação simples (vamos melhorar depois)
-  if (!name || !email || !password || !type) {
-    return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+  if (!result.success) {
+    // Se a validação falhar, retorna os erros
+    return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   }
 
+  const { name, email, password, type } = result.data; // Usa os dados validados
+  
   try {
     // Verifica se o usuário já existe
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -56,11 +58,13 @@ app.post('/api/register', async (req, res) => {
 });
 
 app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
+  const result = loginSchema.safeParse(req.body);
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'E-mail e senha são obrigatórios' });
+  if (!result.success) {
+    return res.status(400).json({ errors: result.error.flatten().fieldErrors });
   }
+
+  const { email, password } = result.data;
 
   try {
     // 1. Encontra o usuário pelo e-mail
@@ -153,15 +157,24 @@ app.post('/api/time-entries/check-out', async (req, res) => {
 
 // Rota para buscar TODOS os funcionários
 app.get('/api/employees', async (req, res) => {
-  try {
-    const employees = await prisma.user.findMany({
-      where: { type: 'employee' }, // Filtra para retornar apenas funcionários
-      orderBy: { name: 'asc' },
-    });
-    res.json(employees);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar funcionários' });
-  }
+
+    const result = addEmployeeSchema.safeParse(req.body);
+
+    if (!result.success) {
+        return res.status(400).json({ errors: result.error.flatten().fieldErrors });
+    }
+
+    const { name, email, password } = result.data;
+
+    try {
+        const employees = await prisma.user.findMany({
+        where: { type: 'employee' }, // Filtra para retornar apenas funcionários
+        orderBy: { name: 'asc' },
+        });
+        res.json(employees);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar funcionários' });
+    }
 });
 
 // Rota para buscar TODOS os registros de ponto

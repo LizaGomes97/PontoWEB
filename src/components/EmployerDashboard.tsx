@@ -369,8 +369,7 @@ export function EmployerDashboard({ onNavigate, onLogout, onViewEmployee }: Empl
 
                     return (
                       <div key={employee.id}>
-                        <div className="flex items-center justify-between p-4 rounded-lg border">
-                          {/* Esta parte continua igual */}
+                        <div className="flex items-center justify-between p-4 rounded-lg border">                          
                           <div className="flex items-center space-x-4">
                             <Avatar>
                               <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
@@ -381,7 +380,6 @@ export function EmployerDashboard({ onNavigate, onLogout, onViewEmployee }: Empl
                             </div>
                           </div>
 
-                          {/* --- A MUDANÇA É AQUI --- */}
                           <div className="flex items-center gap-4"> {/* Container para alinhar os itens à direita */}
                             <div className="text-right">
                               <Badge
@@ -398,8 +396,7 @@ export function EmployerDashboard({ onNavigate, onLogout, onViewEmployee }: Empl
                                 {totalHours.toFixed(1)}h este mês
                               </p>
                             </div>
-                            
-                            {/* O NOVO BOTÃO */}
+                                                        
                             <Button
                               variant="ghost"
                               size="sm"
@@ -408,9 +405,7 @@ export function EmployerDashboard({ onNavigate, onLogout, onViewEmployee }: Empl
                             >
                               <FileText className="h-4 w-4" />
                             </Button>
-                          </div>
-                          {/* --- FIM DA MUDANÇA --- */}
-
+                          </div>                          
                         </div>
                         {index < filteredEmployees.length - 1 && <Separator className="my-4" />}
                       </div>
