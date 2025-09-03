@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
-import { useAuth } from '../contexts/AuthContext';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from './ui/dialog';
+import { useAuth, User } from '../contexts/AuthContext';
 import { 
   Users, 
   Clock, 
@@ -26,13 +27,33 @@ import {
 interface EmployerDashboardProps {
   onNavigate: (page: 'settings') => void;
   onLogout: () => void;
+  onViewEmployee: (employee: User) => void;
 }
 
-export function EmployerDashboard({ onNavigate, onLogout }: EmployerDashboardProps) {
-  const { user, employees, timeEntries } = useAuth();
+export function EmployerDashboard({ onNavigate, onLogout, onViewEmployee }: EmployerDashboardProps) {
+  const { user, employees, timeEntries, addEmployee } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('this-month');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAddEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const success = await addEmployee({ name: newName, email: newEmail, password: newPassword });
+    setIsLoading(false);
+    if (success) {
+      setIsModalOpen(false); // Fecha o modal
+      // Limpa os campos
+      setNewName('');
+      setNewEmail('');
+      setNewPassword('');
+    }
+  };
 
   // Filter employees based on search
   const filteredEmployees = useMemo(() => {
@@ -287,10 +308,46 @@ export function EmployerDashboard({ onNavigate, onLogout }: EmployerDashboardPro
                       />
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full md:w-auto">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Adicionar Funcionário
-                  </Button>
+                  <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full md:w-auto">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Adicionar Funcionário
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <form onSubmit={handleAddEmployee}>
+                        <DialogHeader>
+                          <DialogTitle>Adicionar Novo Funcionário</DialogTitle>
+                          <DialogDescription>
+                            Preencha os dados abaixo. A senha será temporária e o funcionário poderá alterá-la depois.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">Nome</Label>
+                            <Input id="name" value={newName} onChange={(e) => setNewName(e.target.value)} className="col-span-3" required />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="email" className="text-right">Email</Label>
+                            <Input id="email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="col-span-3" required />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="password" className="text-right">Senha</Label>
+                            <Input id="password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="col-span-3" required />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancelar</Button>
+                          </DialogClose>
+                          <Button type="submit" disabled={isLoading}>
+                            {isLoading ? 'Adicionando...' : 'Adicionar'}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
@@ -312,33 +369,43 @@ export function EmployerDashboard({ onNavigate, onLogout }: EmployerDashboardPro
 
                     return (
                       <div key={employee.id}>
-                        <div className="flex items-center justify-between p-4 rounded-lg border">
+                        <div className="flex items-center justify-between p-4 rounded-lg border">                          
                           <div className="flex items-center space-x-4">
                             <Avatar>
-                              <AvatarFallback>
-                                {getInitials(employee.name)}
-                              </AvatarFallback>
+                              <AvatarFallback>{getInitials(employee.name)}</AvatarFallback>
                             </Avatar>
                             <div>
                               <h3 className="font-medium">{employee.name}</h3>
                               <p className="text-sm text-muted-foreground">{employee.email}</p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <Badge 
-                              variant={
-                                status.status === 'working' ? 'default' : 
-                                status.status === 'finished' ? 'secondary' : 
-                                'outline'
-                              }
-                              className={`mb-1 ${status.status === 'working' ? 'bg-green-500' : ''}`}
+
+                          <div className="flex items-center gap-4"> {/* Container para alinhar os itens à direita */}
+                            <div className="text-right">
+                              <Badge
+                                variant={
+                                  status.status === 'working' ? 'default' :
+                                  status.status === 'finished' ? 'secondary' :
+                                  'outline'
+                                }
+                                className={`mb-1 ${status.status === 'working' ? 'bg-green-500' : ''}`}
+                              >
+                                {status.text}
+                              </Badge>
+                              <p className="text-xs text-muted-foreground">
+                                {totalHours.toFixed(1)}h este mês
+                              </p>
+                            </div>
+                                                        
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onViewEmployee(employee)}
+                              aria-label={`Ver folha de ponto de ${employee.name}`}
                             >
-                              {status.text}
-                            </Badge>
-                            <p className="text-xs text-muted-foreground">
-                              {totalHours.toFixed(1)}h este mês
-                            </p>
-                          </div>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </div>                          
                         </div>
                         {index < filteredEmployees.length - 1 && <Separator className="my-4" />}
                       </div>

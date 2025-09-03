@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Separator } from './ui/separator';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, User } from '../contexts/AuthContext';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -16,10 +16,12 @@ import {
 
 interface TimesheetViewProps {
   onBack: () => void;
+  employee?: User;
 }
 
-export function TimesheetView({ onBack }: TimesheetViewProps) {
-  const { user, timeEntries } = useAuth();
+export function TimesheetView({ onBack, employee }: TimesheetViewProps) {
+  const { user: loggedInUser, timeEntries } = useAuth();
+  const userToDisplay = employee || loggedInUser;
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -27,18 +29,18 @@ export function TimesheetView({ onBack }: TimesheetViewProps) {
 
   // Filter entries for selected month
   const monthEntries = useMemo(() => {
-    if (!user) return [];
+    if (!userToDisplay) return [];
     
     const [year, month] = selectedMonth.split('-');
     return timeEntries
       .filter(entry => {
         const entryDate = new Date(entry.date);
-        return entry.employeeId === user.id &&
+        return entry.employeeId === userToDisplay.id &&
                entryDate.getFullYear() === parseInt(year) &&
                entryDate.getMonth() === parseInt(month) - 1;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [timeEntries, user, selectedMonth]);
+  }, [timeEntries, userToDisplay, selectedMonth]);
 
   // Calculate statistics for the month
   const monthStats = useMemo(() => {
@@ -58,7 +60,7 @@ export function TimesheetView({ onBack }: TimesheetViewProps) {
 
   // Generate month options for the last 12 months
   const monthOptions = useMemo(() => {
-    const options = [];
+    const options: { value: string; label: string }[] = [];
     const now = new Date();
     
     for (let i = 0; i < 12; i++) {
@@ -343,7 +345,7 @@ export function TimesheetView({ onBack }: TimesheetViewProps) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Funcionário:</span>
-                      <span>{user?.name}</span>
+                      <span className="font-medium">{userToDisplay?.name}</span>
                     </div>
                   </div>
                 </div>

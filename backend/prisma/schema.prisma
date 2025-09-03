@@ -1,0 +1,36 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String   // Mais tarde, vamos criptografar isso!
+  type      String   // "employee" ou "employer"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  timeEntries TimeEntry[] // Adiciona a relação com os registros de ponto
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  date        String
+  checkIn     String?   // O '?' significa que o campo é opcional
+  checkOut    String?
+  totalHours  Float?
+  latitude    Float
+  longitude   Float
+  address     String
+  createdAt   DateTime  @default(now())
+
+  employee    User      @relation(fields: [employeeId], references: [id])
+  employeeId  String
+}
