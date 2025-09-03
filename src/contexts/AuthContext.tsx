@@ -44,43 +44,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [employees, setEmployees] = useState<User[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) {
-        // Limpa os dados quando o usuário desloga
-        setEmployees([]);
-        setTimeEntries([]);
-        return;
+  const fetchInitialData = async (currentUser: User) => {
+    try {
+      if (currentUser.type === 'employer') {
+        const [employeesResponse, entriesResponse] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees`),
+          fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries`)
+        ]);
+        if (employeesResponse.ok) setEmployees(await employeesResponse.json());
+        if (entriesResponse.ok) setTimeEntries(await entriesResponse.json());
+      } else {
+        const entriesResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries/${currentUser.id}`);
+        if (entriesResponse.ok) setTimeEntries(await entriesResponse.json());
       }
-
-      try {
-        if (user.type === 'employee') {
-          // Lógica do funcionário (já existente)
-          const entriesResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries/${user.id}`);
-          if (entriesResponse.ok) {
-            setTimeEntries(await entriesResponse.json());
-          }
-        } else if (user.type === 'employer') {
-          // --- NOVA LÓGICA DO GESTOR ---
-          const [employeesResponse, entriesResponse] = await Promise.all([
-            fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees`),
-            fetch(`${import.meta.env.VITE_API_BASE_URL}/api/time-entries`)
-          ]);
-
-          if (employeesResponse.ok) {
-            setEmployees(await employeesResponse.json());
-          }
-          if (entriesResponse.ok) {
-            setTimeEntries(await entriesResponse.json());
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-      }
-    };
-
-    fetchData();
-  }, [user]); // Roda sempre que o usuário logado muda
+    } catch (error) {
+      console.error("Erro ao buscar dados iniciais:", error);
+      toast.error("Não foi possível carregar os dados do servidor.");
+    }
+  };
 
   const login = async (email: string, password: string, type: UserType): Promise<boolean> => {
     try {
@@ -109,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(loggedUser);
+      await fetchInitialData(loggedUser);
       return true;
     } catch (error) {
       console.error('Falha ao conectar com o servidor:', error);
@@ -138,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (newUser.type === 'employee') {
       setEmployees(prev => [...prev, newUser]);
     }
-
+    await fetchInitialData(newUser);
     return true;
   };
 
