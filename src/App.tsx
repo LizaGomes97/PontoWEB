@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, User } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { AccessibilityProvider } from './components/AccessibilityProvider';
 import { LoginForm } from './components/LoginForm';
@@ -14,7 +14,12 @@ type AppView = 'dashboard' | 'timesheet' | 'settings';
 function AppContent() {
   const { user, logout } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
+  const [selectedEmployee, setSelectedEmployee] = useState<User | null>(null);
 
+  const handleViewEmployeeTimesheet = (employee: User) => {
+    setSelectedEmployee(employee);
+    setCurrentView('timesheet');
+  };
   const handleNavigate = (view: AppView) => {
     setCurrentView(view);
   };
@@ -37,7 +42,9 @@ function AppContent() {
   }
 
   if (currentView === 'timesheet') {
-    return <TimesheetView onBack={handleBack} />;
+    // Se for um gestor vendo um funcionário, passe o 'selectedEmployee'
+    // Se for um funcionário vendo a si mesmo, 'selectedEmployee' será nulo, e o componente funcionará como antes
+    return <TimesheetView onBack={handleBack} employee={selectedEmployee} />;
   }
 
   // Dashboard view
@@ -53,6 +60,7 @@ function AppContent() {
       <EmployerDashboard
         onNavigate={handleNavigate}
         onLogout={handleLogout}
+        onViewEmployee={handleViewEmployeeTimesheet}
       />
     );
   }
